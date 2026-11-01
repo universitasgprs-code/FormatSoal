@@ -635,14 +635,31 @@
     </div>
 
     <div class="panel">
-      <h3>📊 9. Integrasi Google Spreadsheet (Kirim Nilai Otomatis)</h3>
-      <p style="font-size:13px; margin:0 0 10px 0; color:var(--text-secondary);">Masukkan URL Web App dari Google Apps Script untuk menerima hasil ujian siswa secara otomatis ke Google Spreadsheet.</p>
+      <h3>📊 9. Integrasi Google Spreadsheet & Drive (Kirim Nilai Otomatis)</h3>
+      <p style="font-size:13px; margin:0 0 10px 0; color:var(--text-secondary);">Masukkan URL Web App dari Google Apps Script untuk menerima hasil ujian siswa secara otomatis ke Google Spreadsheet. Anda juga dapat menyimpan informasi lokasi folder Google Drive tempat spreadsheet berada.</p>
+
       <div class="form-group">
+        <label>Nama Akun Google:</label>
+        <input type="text" id="inputGoogleAccount" class="input-judul" placeholder="Contoh: guru.sekolah@gmail.com">
+      </div>
+      <div class="form-group">
+        <label>Nama Folder di Google Drive:</label>
+        <input type="text" id="inputGoogleFolder" class="input-judul" placeholder="Contoh: Nilai Ujian Semester Ganjil 2024">
+      </div>
+      <div class="form-group">
+        <label>Link Folder Google Drive:</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="inputGoogleDriveLink" class="input-judul" style="flex: 1;" placeholder="https://drive.google.com/drive/folders/...">
+          <button class="btn btn-info" onclick="bukaLinkDrive()" style="padding:8px 15px; font-size:13px; background:var(--accent-blue); color:white;">📂 Buka Folder</button>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
         <label>URL Google Apps Script Web App:</label>
         <input type="text" id="inputGoogleSheet" class="input-judul" placeholder="https://script.google.com/macros/s/.../exec">
       </div>
       <div class="panel-row">
-        <button class="btn btn-success" onclick="simpanGoogleSheet()" style="padding:8px 15px; font-size:13px;">💾 Simpan URL</button>
+        <button class="btn btn-success" onclick="simpanGoogleSheet()" style="padding:8px 15px; font-size:13px;">💾 Simpan Data & URL</button>
         <button class="btn btn-secondary" onclick="salinGoogleSheetUrl()" style="padding:8px 15px; font-size:13px;">📋 Salin URL</button>
         <button class="btn btn-warning" onclick="tesKirimGoogleSheet()" style="padding:8px 15px; font-size:13px;">🧪 Tes Kirim Data</button>
         <button class="btn btn-secondary" onclick="resetGoogleSheet()" style="padding:8px 15px; font-size:13px;">🔄 Kosongkan</button>
@@ -888,6 +905,9 @@ const SUBJUDUL_DEFAULT = "MATERI BAB";
 const PASSWORD_DEFAULT = "guru123";
 const TOKEN_DEFAULT = "2027";
 const GOOGLE_SHEET_URL_DEFAULT = "";
+const GOOGLE_ACCOUNT_DEFAULT = "";
+const GOOGLE_FOLDER_DEFAULT = "";
+const GOOGLE_DRIVE_LINK_DEFAULT = "";
 const DURASI_DEFAULT = 35;
 const JUMLAH_SOAL_DEFAULT = 0;
 const ACAK_DEFAULT = true;
@@ -905,6 +925,9 @@ const JADWAL_UJIAN_DEFAULT = [];
 // __CONFIG_END__
 
 // __RUNTIME_CONFIG_START__
+let configGoogleAccount = localStorage.getItem('configGoogleAccount') !== null ? localStorage.getItem('configGoogleAccount') : (typeof GOOGLE_ACCOUNT_DEFAULT !== 'undefined' ? GOOGLE_ACCOUNT_DEFAULT : "");
+let configGoogleFolder = localStorage.getItem('configGoogleFolder') !== null ? localStorage.getItem('configGoogleFolder') : (typeof GOOGLE_FOLDER_DEFAULT !== 'undefined' ? GOOGLE_FOLDER_DEFAULT : "");
+let configGoogleDriveLink = localStorage.getItem('configGoogleDriveLink') !== null ? localStorage.getItem('configGoogleDriveLink') : (typeof GOOGLE_DRIVE_LINK_DEFAULT !== 'undefined' ? GOOGLE_DRIVE_LINK_DEFAULT : "");
 let configDurasi = parseInt(localStorage.getItem('configDurasi') || (typeof DURASI_DEFAULT !== 'undefined' ? DURASI_DEFAULT : 35));
 let configJumlahSoal = parseInt(localStorage.getItem('configJumlahSoal') || (typeof JUMLAH_SOAL_DEFAULT !== 'undefined' ? JUMLAH_SOAL_DEFAULT : 0));
 let configAcak = localStorage.getItem('configAcak') !== null ? localStorage.getItem('configAcak') === 'true' : (typeof ACAK_DEFAULT !== 'undefined' ? ACAK_DEFAULT : true);
@@ -1266,12 +1289,30 @@ function autoSaveDashboardGuru(fieldName = '') {
       }
     }
 
-    // 5. Simpan Google Sheet URL
+    // 5. Simpan Google Sheet URL & Drive Info
     const inSheet = document.getElementById('inputGoogleSheet');
+    const inAccount = document.getElementById('inputGoogleAccount');
+    const inFolder = document.getElementById('inputGoogleFolder');
+    const inDriveLink = document.getElementById('inputGoogleDriveLink');
     if (inSheet) {
       configGoogleSheetUrl = inSheet.value.trim();
       localStorage.setItem('configGoogleSheetUrl', configGoogleSheetUrl);
       AppStorage.setItem('configGoogleSheetUrl', configGoogleSheetUrl);
+    }
+    if (inAccount) {
+      configGoogleAccount = inAccount.value.trim();
+      localStorage.setItem('configGoogleAccount', configGoogleAccount);
+      AppStorage.setItem('configGoogleAccount', configGoogleAccount);
+    }
+    if (inFolder) {
+      configGoogleFolder = inFolder.value.trim();
+      localStorage.setItem('configGoogleFolder', configGoogleFolder);
+      AppStorage.setItem('configGoogleFolder', configGoogleFolder);
+    }
+    if (inDriveLink) {
+      configGoogleDriveLink = inDriveLink.value.trim();
+      localStorage.setItem('configGoogleDriveLink', configGoogleDriveLink);
+      AppStorage.setItem('configGoogleDriveLink', configGoogleDriveLink);
     }
 
     tampilkanAutoSaveToast('💾 Perubahan ' + (fieldName || 'pengaturan') + ' tersimpan otomatis (Offline)');
@@ -1288,7 +1329,10 @@ function pasangAutoSaveDashboardGuru() {
     { id: 'inputNilaiMaksimal', name: 'Nilai Maksimal' },
     { id: 'inputNilaiKKM', name: 'KKM' },
     { id: 'inputMaxPelanggaran', name: 'Batas Pelanggaran' },
-    { id: 'inputGoogleSheet', name: 'URL Spreadsheet' }
+    { id: 'inputGoogleSheet', name: 'URL Spreadsheet' },
+    { id: 'inputGoogleAccount', name: 'Akun Google' },
+    { id: 'inputGoogleFolder', name: 'Folder Google Drive' },
+    { id: 'inputGoogleDriveLink', name: 'Link Google Drive' }
   ];
 
   fieldMap.forEach(item => {
@@ -2012,6 +2056,9 @@ function loadDashboardData() {
   document.getElementById('inputSubJudul').value = configSubJudul;
   document.getElementById('inputToken').value = configToken;
   document.getElementById('inputGoogleSheet').value = configGoogleSheetUrl;
+  document.getElementById('inputGoogleAccount').value = configGoogleAccount;
+  document.getElementById('inputGoogleFolder').value = configGoogleFolder;
+  document.getElementById('inputGoogleDriveLink').value = configGoogleDriveLink;
   document.getElementById('previewJudulUtama').innerText = configJudul;
   document.getElementById('previewSubJudul').innerText = configSubJudul;
   document.getElementById('previewToken').innerText = configToken;
@@ -2098,9 +2145,34 @@ function salinKodeGas() {
 
 function simpanGoogleSheet() {
   const url = document.getElementById('inputGoogleSheet').value.trim();
+  const account = document.getElementById('inputGoogleAccount').value.trim();
+  const folder = document.getElementById('inputGoogleFolder').value.trim();
+  const driveLink = document.getElementById('inputGoogleDriveLink').value.trim();
+
   configGoogleSheetUrl = url;
+  configGoogleAccount = account;
+  configGoogleFolder = folder;
+  configGoogleDriveLink = driveLink;
+
   localStorage.setItem('configGoogleSheetUrl', configGoogleSheetUrl);
-  document.getElementById('statusGoogleSheet').innerHTML = '<div class="alert-success">✅ URL Google Apps Script berhasil disimpan di perangkat ini!<br>📌 <strong>PENTING:</strong> Klik tombol <strong>"💾 Download HTML Terbaru"</strong> di bawah lalu ganti file di GitHub Pages/hosting Anda agar URL otomatis terpasang di seluruh HP/perangkat siswa tanpa perlu copy-paste lagi.</div>';
+  localStorage.setItem('configGoogleAccount', configGoogleAccount);
+  localStorage.setItem('configGoogleFolder', configGoogleFolder);
+  localStorage.setItem('configGoogleDriveLink', configGoogleDriveLink);
+
+  document.getElementById('statusGoogleSheet').innerHTML = '<div class="alert-success">✅ Data Drive dan URL Google Apps Script berhasil disimpan di perangkat ini!<br>📌 <strong>PENTING:</strong> Klik tombol <strong>"💾 Download HTML Terbaru"</strong> di bawah lalu ganti file di GitHub Pages/hosting Anda agar URL otomatis terpasang di seluruh HP/perangkat siswa tanpa perlu copy-paste lagi.</div>';
+}
+
+function bukaLinkDrive() {
+  const driveLink = document.getElementById('inputGoogleDriveLink').value.trim();
+  if (!driveLink) {
+    alert('❌ Link Folder Google Drive belum diisi!');
+    return;
+  }
+  if (!driveLink.startsWith('http://') && !driveLink.startsWith('https://')) {
+    alert('❌ Format link tidak valid. Pastikan link diawali dengan http:// atau https://');
+    return;
+  }
+  window.open(driveLink, '_blank');
 }
 
 function salinGoogleSheetUrl() {
@@ -2142,11 +2214,23 @@ function salinSpreadsheetKelas(index) {
 }
 
 function resetGoogleSheet() {
-  if (!confirm('Kosongkan URL Google Apps Script?')) return;
+  if (!confirm('Kosongkan Data Drive dan URL Google Apps Script?')) return;
   configGoogleSheetUrl = '';
+  configGoogleAccount = '';
+  configGoogleFolder = '';
+  configGoogleDriveLink = '';
+
   localStorage.setItem('configGoogleSheetUrl', '');
+  localStorage.setItem('configGoogleAccount', '');
+  localStorage.setItem('configGoogleFolder', '');
+  localStorage.setItem('configGoogleDriveLink', '');
+
   document.getElementById('inputGoogleSheet').value = '';
-  document.getElementById('statusGoogleSheet').innerHTML = '<div class="alert-info">ℹ️ URL Google Apps Script dikosongkan.</div>';
+  document.getElementById('inputGoogleAccount').value = '';
+  document.getElementById('inputGoogleFolder').value = '';
+  document.getElementById('inputGoogleDriveLink').value = '';
+
+  document.getElementById('statusGoogleSheet').innerHTML = '<div class="alert-info">ℹ️ Data Drive dan URL Google Apps Script dikosongkan.</div>';
 }
 
 function tesKirimGoogleSheet() {
@@ -2530,8 +2614,8 @@ function simpanPermanenKeHTML() {
     const newVersion = incrementVersion(HTML_VERSION);
     localStorage.setItem('htmlVersion', newVersion);
     ['statusJudul','statusPassword','statusWaktu','statusImport','statusPengaturanNilai','statusMaxPelanggaran','statusGoogleSheet','statusResetSiswa','statusSimpanPermanen','statusJadwalDb','statusSiswaDb','statusSpreadsheetMap','statusMapelDb','statusSimpanPengaturan'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
-    const newConfigBlock = '// __CONFIG_START__\nconst JUDUL_DEFAULT = ' + JSON.stringify(configJudul) + ';\nconst SUBJUDUL_DEFAULT = ' + JSON.stringify(configSubJudul) + ';\nconst PASSWORD_DEFAULT = ' + JSON.stringify(PASSWORD_GURU) + ';\nconst TOKEN_DEFAULT = ' + JSON.stringify(configToken) + ';\nconst GOOGLE_SHEET_URL_DEFAULT = ' + JSON.stringify(configGoogleSheetUrl) + ';\nconst DURASI_DEFAULT = ' + JSON.stringify(configDurasi) + ';\nconst JUMLAH_SOAL_DEFAULT = ' + JSON.stringify(configJumlahSoal) + ';\nconst ACAK_DEFAULT = ' + JSON.stringify(configAcak) + ';\nconst ACAK_OPSI_DEFAULT = ' + JSON.stringify(configAcakOpsi) + ';\nconst MAX_PELANGGARAN_DEFAULT = ' + JSON.stringify(configMaxPelanggaran) + ';\nconst NILAI_MAKSIMAL_DEFAULT = ' + JSON.stringify(configNilaiMaksimal) + ';\nconst NILAI_KKM_DEFAULT = ' + JSON.stringify(configNilaiKKM) + ';\nconst TAMPIL_NILAI_DEFAULT = ' + JSON.stringify(configTampilNilai) + ';\nconst DATA_SISWA_DEFAULT = ' + JSON.stringify(dataSiswaDb) + ';\nconst SPREADSHEET_MAP_DEFAULT = ' + JSON.stringify(spreadsheetMapDb) + ';\nconst MAPEL_DEFAULT = ' + JSON.stringify(mapelDb) + ';\nconst SOAL_MAPEL_DEFAULT = ' + JSON.stringify(soalMapelDb) + ';\nconst SOAL_DEFAULT = ' + JSON.stringify(soalAktif) + ';\nconst JADWAL_UJIAN_DEFAULT = ' + JSON.stringify(jadwalUjianDb) + ';\n// __CONFIG_END__';
-    const newRuntimeConfigBlock = '// __RUNTIME_CONFIG_START__\nlet configDurasi = parseInt(localStorage.getItem(\'configDurasi\') || (typeof DURASI_DEFAULT !== \'undefined\' ? DURASI_DEFAULT : ' + configDurasi + '));\nlet configJumlahSoal = parseInt(localStorage.getItem(\'configJumlahSoal\') || (typeof JUMLAH_SOAL_DEFAULT !== \'undefined\' ? JUMLAH_SOAL_DEFAULT : ' + configJumlahSoal + '));\nlet configAcak = localStorage.getItem(\'configAcak\') !== null ? localStorage.getItem(\'configAcak\') === \'true\' : (typeof ACAK_DEFAULT !== \'undefined\' ? ACAK_DEFAULT : ' + configAcak + ');\nlet configAcakOpsi = localStorage.getItem(\'configAcakOpsi\') !== null ? localStorage.getItem(\'configAcakOpsi\') === \'true\' : (typeof ACAK_OPSI_DEFAULT !== \'undefined\' ? ACAK_OPSI_DEFAULT : ' + configAcakOpsi + ');\nlet configMaxPelanggaran = parseInt(localStorage.getItem(\'configMaxPelanggaran\') || (typeof MAX_PELANGGARAN_DEFAULT !== \'undefined\' ? MAX_PELANGGARAN_DEFAULT : ' + configMaxPelanggaran + '));\nlet configNilaiMaksimal = parseInt(localStorage.getItem(\'configNilaiMaksimal\') || (typeof NILAI_MAKSIMAL_DEFAULT !== \'undefined\' ? NILAI_MAKSIMAL_DEFAULT : ' + configNilaiMaksimal + '));\nlet configNilaiKKM = parseInt(localStorage.getItem(\'configNilaiKKM\') || (typeof NILAI_KKM_DEFAULT !== \'undefined\' ? NILAI_KKM_DEFAULT : ' + configNilaiKKM + '));\nlet configTampilNilai = localStorage.getItem(\'configTampilNilai\') !== null ? localStorage.getItem(\'configTampilNilai\') !== \'false\' : (typeof TAMPIL_NILAI_DEFAULT !== \'undefined\' ? TAMPIL_NILAI_DEFAULT : ' + configTampilNilai + ');\n// __RUNTIME_CONFIG_END__';
+    const newConfigBlock = '// __CONFIG_START__\nconst JUDUL_DEFAULT = ' + JSON.stringify(configJudul) + ';\nconst SUBJUDUL_DEFAULT = ' + JSON.stringify(configSubJudul) + ';\nconst PASSWORD_DEFAULT = ' + JSON.stringify(PASSWORD_GURU) + ';\nconst TOKEN_DEFAULT = ' + JSON.stringify(configToken) + ';\nconst GOOGLE_SHEET_URL_DEFAULT = ' + JSON.stringify(configGoogleSheetUrl) + ';\nconst GOOGLE_ACCOUNT_DEFAULT = ' + JSON.stringify(configGoogleAccount) + ';\nconst GOOGLE_FOLDER_DEFAULT = ' + JSON.stringify(configGoogleFolder) + ';\nconst GOOGLE_DRIVE_LINK_DEFAULT = ' + JSON.stringify(configGoogleDriveLink) + ';\nconst DURASI_DEFAULT = ' + JSON.stringify(configDurasi) + ';\nconst JUMLAH_SOAL_DEFAULT = ' + JSON.stringify(configJumlahSoal) + ';\nconst ACAK_DEFAULT = ' + JSON.stringify(configAcak) + ';\nconst ACAK_OPSI_DEFAULT = ' + JSON.stringify(configAcakOpsi) + ';\nconst MAX_PELANGGARAN_DEFAULT = ' + JSON.stringify(configMaxPelanggaran) + ';\nconst NILAI_MAKSIMAL_DEFAULT = ' + JSON.stringify(configNilaiMaksimal) + ';\nconst NILAI_KKM_DEFAULT = ' + JSON.stringify(configNilaiKKM) + ';\nconst TAMPIL_NILAI_DEFAULT = ' + JSON.stringify(configTampilNilai) + ';\nconst DATA_SISWA_DEFAULT = ' + JSON.stringify(dataSiswaDb) + ';\nconst SPREADSHEET_MAP_DEFAULT = ' + JSON.stringify(spreadsheetMapDb) + ';\nconst MAPEL_DEFAULT = ' + JSON.stringify(mapelDb) + ';\nconst SOAL_MAPEL_DEFAULT = ' + JSON.stringify(soalMapelDb) + ';\nconst SOAL_DEFAULT = ' + JSON.stringify(soalAktif) + ';\nconst JADWAL_UJIAN_DEFAULT = ' + JSON.stringify(jadwalUjianDb) + ';\n// __CONFIG_END__';
+    const newRuntimeConfigBlock = '// __RUNTIME_CONFIG_START__\nlet configGoogleAccount = localStorage.getItem(\'configGoogleAccount\') !== null ? localStorage.getItem(\'configGoogleAccount\') : (typeof GOOGLE_ACCOUNT_DEFAULT !== \'undefined\' ? GOOGLE_ACCOUNT_DEFAULT : "");\nlet configGoogleFolder = localStorage.getItem(\'configGoogleFolder\') !== null ? localStorage.getItem(\'configGoogleFolder\') : (typeof GOOGLE_FOLDER_DEFAULT !== \'undefined\' ? GOOGLE_FOLDER_DEFAULT : "");\nlet configGoogleDriveLink = localStorage.getItem(\'configGoogleDriveLink\') !== null ? localStorage.getItem(\'configGoogleDriveLink\') : (typeof GOOGLE_DRIVE_LINK_DEFAULT !== \'undefined\' ? GOOGLE_DRIVE_LINK_DEFAULT : "");\nlet configDurasi = parseInt(localStorage.getItem(\'configDurasi\') || (typeof DURASI_DEFAULT !== \'undefined\' ? DURASI_DEFAULT : ' + configDurasi + '));\nlet configJumlahSoal = parseInt(localStorage.getItem(\'configJumlahSoal\') || (typeof JUMLAH_SOAL_DEFAULT !== \'undefined\' ? JUMLAH_SOAL_DEFAULT : ' + configJumlahSoal + '));\nlet configAcak = localStorage.getItem(\'configAcak\') !== null ? localStorage.getItem(\'configAcak\') === \'true\' : (typeof ACAK_DEFAULT !== \'undefined\' ? ACAK_DEFAULT : ' + configAcak + ');\nlet configAcakOpsi = localStorage.getItem(\'configAcakOpsi\') !== null ? localStorage.getItem(\'configAcakOpsi\') === \'true\' : (typeof ACAK_OPSI_DEFAULT !== \'undefined\' ? ACAK_OPSI_DEFAULT : ' + configAcakOpsi + ');\nlet configMaxPelanggaran = parseInt(localStorage.getItem(\'configMaxPelanggaran\') || (typeof MAX_PELANGGARAN_DEFAULT !== \'undefined\' ? MAX_PELANGGARAN_DEFAULT : ' + configMaxPelanggaran + '));\nlet configNilaiMaksimal = parseInt(localStorage.getItem(\'configNilaiMaksimal\') || (typeof NILAI_MAKSIMAL_DEFAULT !== \'undefined\' ? NILAI_MAKSIMAL_DEFAULT : ' + configNilaiMaksimal + '));\nlet configNilaiKKM = parseInt(localStorage.getItem(\'configNilaiKKM\') || (typeof NILAI_KKM_DEFAULT !== \'undefined\' ? NILAI_KKM_DEFAULT : ' + configNilaiKKM + '));\nlet configTampilNilai = localStorage.getItem(\'configTampilNilai\') !== null ? localStorage.getItem(\'configTampilNilai\') !== \'false\' : (typeof TAMPIL_NILAI_DEFAULT !== \'undefined\' ? TAMPIL_NILAI_DEFAULT : ' + configTampilNilai + ');\n// __RUNTIME_CONFIG_END__';
     html = html.replace(/\/\/ __CONFIG_START__[\s\S]*?\/\/ __CONFIG_END__/, () => newConfigBlock);
     html = html.replace(/\/\/ __RUNTIME_CONFIG_START__[\s\S]*?\/\/ __RUNTIME_CONFIG_END__/, () => newRuntimeConfigBlock);
     html = html.replace(/const HTML_VERSION = "[^"]*";/, 'const HTML_VERSION = "' + newVersion + '";');
